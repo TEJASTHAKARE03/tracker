@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RS • Call Follow-Up</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    html,body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .nova{
+      background:
+        radial-gradient(1200px 600px at 20% -20%,rgba(229,9,20,.12),transparent),
+        radial-gradient(1100px 540px at 120% 10%,rgba(229,9,20,.08),transparent),
+        #0c0c0f;
+      color:#fff; min-height:100vh;
+    }
+    .card{border-radius:18px;background:linear-gradient(180deg,#111214,#0c0c10);border:1px solid rgba(255,255,255,.06);box-shadow:0 20px 50px rgba(0,0,0,.45)}
+    .badge{background:#121217;border:1px solid rgba(255,255,255,.08);color:#cbd5e1;padding:.25rem .6rem;border-radius:999px;font-size:.75rem}
+    .input{width:100%;border-radius:14px;padding:12px 14px;background:#151519;border:1px solid #2a2a31;color:#fff}
+    .input:focus{outline:none;border-color:#ef4444;box-shadow:0 0 0 3px rgba(229,9,20,.25)}
+    select.input{appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="%23a3a3a3"><path d="M7 10l5 5 5-5"/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:42px}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;border-radius:14px;padding:.6rem 1rem;font-weight:700}
+    .btn-primary{background:linear-gradient(180deg,#ef4444,#a60711);border:1px solid rgba(229,9,20,.55);color:#fff}
+    .btn-ghost{background:#191a1f;border:1px solid #2b2c33;color:#e5e7eb}
+    .toast{position:fixed;right:16px;bottom:16px;z-index:99;display:none;padding:10px 14px;border-radius:12px;color:#fff;background:#e50914;box-shadow:0 8px 24px rgba(229,9,20,.35);font:600 13px/1 Inter,system-ui}
+    /* white calendar icons for dark theme */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+  </style>
+</head>
+<body class="nova">
+  <!-- Header -->
+  <header class="sticky top-0 z-40 border-b border-white/10 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div class="h-9 w-9 rounded-xl bg-red-600 grid place-content-center text-white font-extrabold">RS</div>
+      <div>
+        <div class="text-base font-bold leading-tight">Call Follow-Up</div>
+        <div class="text-xs text-slate-400">PPF Sales & Service</div>
+      </div>
+      <a href="index.html" class="ml-auto btn btn-ghost">Home</a>
+    </div>
+  </header>
+
+  <!-- KPIs -->
+  <section class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="card p-4"><div class="text-xs text-slate-400">Today’s Calls</div><div id="kpi-today" class="mt-1 text-2xl font-semibold">0</div></div>
+    <div class="card p-4"><div class="text-xs text-slate-400">Open Follow-ups</div><div id="kpi-open" class="mt-1 text-2xl font-semibold">0</div></div>
+    <div class="card p-4"><div class="text-xs text-slate-400">Completion Rate</div><div id="kpi-completion" class="mt-1 text-2xl font-semibold">0%</div></div>
+    <div class="card p-4"><div class="text-xs text-slate-400">Frequent Callers</div><div id="kpi-frequent" class="mt-1 text-2xl font-semibold">0</div></div>
+  </section>
+
+  <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Forms -->
+    <section class="lg:col-span-5 space-y-6">
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">Core Call Logging</h2>
+          <span class="badge">Auto date/time</span>
+        </div>
+        <div class="grid grid-cols-1 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm text-slate-300 font-medium">Caller Name</label>
+              <input id="caller-name" class="input" placeholder="e.g., Neeraj Sharma"/>
+            </div>
+            <div>
+              <label class="text-sm text-slate-300 font-medium">Phone Number</label>
+              <input id="caller-phone" class="input" inputmode="tel" placeholder="e.g., 98765 43210"/>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm text-slate-300 font-medium">Date & Time</label>
+              <input id="call-datetime" class="input" type="datetime-local"/>
+            </div>
+            <div>
+              <label class="text-sm text-slate-300 font-medium">Person Requested</label>
+              <select id="person-requested" class="input"></select>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm text-slate-300 font-medium">Notes / Purpose of Call</label>
+            <textarea id="call-notes" class="input" rows="4" placeholder="PPF for new car, pricing, availability…"></textarea>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label class="inline-flex items-center gap-2"><input id="notify-email" type="checkbox" class="h-4 w-4"><span class="text-sm">Email reminder (optional)</span></label>
+            <label class="inline-flex items-center gap-2"><input id="notify-whatsapp" type="checkbox" class="h-4 w-4"><span class="text-sm">WhatsApp reminder (optional)</span></label>
+          </div>
+          <div class="flex gap-3"><button id="save-call" class="btn btn-primary">Save Call</button><button type="reset" class="btn btn-ghost">Reset</button></div>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">Follow-Up Management</h2>
+          <span class="badge">Assign & track</span>
+        </div>
+        <div class="grid grid-cols-1 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="text-sm text-slate-300 font-medium">Status</label>
+              <select id="followup-status" class="input">
+                <option>Pending</option>
+                <option>In Progress</option>
+                <option>Completed</option>
+                <option>No Follow-up Needed</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm text-slate-300 font-medium">Due Date</label>
+              <input id="followup-due" type="date" class="input"/>
+            </div>
+            <div>
+              <label class="text-sm text-slate-300 font-medium">Assign to Staff</label>
+              <select id="followup-staff" class="input"></select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label class="inline-flex items-center gap-2"><input id="followup-email" type="checkbox" class="h-4 w-4"><span class="text-sm">Email reminder (optional)</span></label>
+            <label class="inline-flex items-center gap-2"><input id="followup-whatsapp" type="checkbox" class="h-4 w-4"><span class="text-sm">WhatsApp reminder (optional)</span></label>
+          </div>
+          <div class="flex gap-3"><button id="save-followup" class="btn btn-primary">Save Follow-Up</button><button type="reset" class="btn btn-ghost">Reset</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Table + Charts -->
+    <section class="lg:col-span-7 space-y-6">
+      <div class="card overflow-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-white/5 text-slate-100">
+            <tr>
+              <th class="text-left px-4 py-3">Date & Time</th>
+              <th class="text-left px-4 py-3">Caller</th>
+              <th class="text-left px-4 py-3">Phone</th>
+              <th class="text-left px-4 py-3">Requested</th>
+              <th class="text-left px-4 py-3">Assigned</th>
+              <th class="text-left px-4 py-3">Status</th>
+              <th class="text-left px-4 py-3">Due</th>
+              <th class="text-left px-4 py-3">Notes</th>
+              <th class="text-left px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="calls-tbody" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Calls per Staff Member</h3>
+            <span class="badge">Last 30 days</span>
+          </div>
+          <canvas id="chart-calls-per-staff" height="210"></canvas>
+        </div>
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold">Follow-Up Completion</h3>
+            <span class="badge">All time</span>
+          </div>
+          <canvas id="chart-completion-rate" height="210"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Shared logic -->
+  <script src="script.js" defer></script>
+
+  <!-- Page wiring -->
+  <script>
+    const fmtDate = d => d ? new Date(d).toLocaleDateString() : '-';
+    const fmtDateTime = d => d ? new Date(d).toLocaleString() : '-';
+
+    // Robust field picking
+    const pick = (obj, keys, fallback='-') => {
+      for (const k of keys) {
+        const v = obj?.[k];
+        if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+      }
+      return fallback;
+    };
+
+    function indexFollowups(list){
+      const m = new Map();
+      (list || []).forEach(f => {
+        const callId =
+          f.callId || f.call_id || f.call?.id || f.call?._id || f.callIdStr || f.callID || f.callRef;
+        if (callId) m.set(String(callId), f);
+      });
+      return m;
+    }
+
+    async function loadDataAndRender(){
+      try{
+        const [callsRes, fuRes] = await Promise.all([
+          fetch('/api/calls'),
+          fetch('/api/followups')
+        ]);
+        const calls = await callsRes.json();
+        const followups = await fuRes.json();
+
+        const mapFU = indexFollowups(followups);
+        const tbody = document.getElementById('calls-tbody');
+
+        if (!calls || !calls.length) {
+          tbody.innerHTML = `
+            <tr><td colspan="9" class="px-4 py-6 text-center text-slate-300">
+              No calls yet. Add one using the form on the left.
+            </td></tr>`;
+        } else {
+          tbody.innerHTML = calls.map(c => {
+            const id = String(c._id || c.id || '');
+            const f = mapFU.get(id);
+            const assigned = pick(f, ['assignedTo','staff','staffName'], '-');
+            const status   = pick(f, ['status','followupStatus'], '-');
+            const due      = pick(f, ['dueDate','followupDue', 'due'], null);
+
+            const dateTime = pick(c, ['datetime','dateTime','createdAt','date'], null);
+            const caller   = pick(c, ['callerName','name'], '-');
+            const phone    = pick(c, ['callerPhone','phone'], '-');
+            const requested= pick(c, ['personRequested','requestedFor','person'], '-');
+            const notes    = pick(c, ['notes','remark','purpose'], '-');
+
+            return `
+              <tr class="hover:bg-white/5">
+                <td class="px-4 py-3 text-slate-200">${fmtDateTime(dateTime)}</td>
+                <td class="px-4 py-3 text-slate-200">${caller}</td>
+                <td class="px-4 py-3 text-slate-200">${phone}</td>
+                <td class="px-4 py-3 text-slate-200">${requested}</td>
+                <td class="px-4 py-3 text-slate-200">${assigned}</td>
+                <td class="px-4 py-3 text-slate-200">${status}</td>
+                <td class="px-4 py-3 text-slate-200">${fmtDate(due)}</td>
+                <td class="px-4 py-3 text-slate-200">${notes}</td>
+                <td class="px-4 py-3 text-slate-200"><button class="btn btn-ghost text-xs">View</button></td>
+              </tr>`;
+          }).join('');
+        }
+
+        updateKPIs(calls, followups);
+        renderCharts(followups);
+      }catch(err){
+        console.error('Failed to load/merge data:', err);
+        const tbody = document.getElementById('calls-tbody');
+        tbody.innerHTML = `<tr><td colspan="9" class="px-4 py-6 text-center text-red-300">Error loading data</td></tr>`;
+      }
+    }
+
+    function updateKPIs(calls, followups){
+      const today = new Date(); today.setHours(0,0,0,0);
+      const todaysCalls = (calls||[]).filter(c => {
+        const d = new Date(c.datetime || c.dateTime || c.createdAt || c.date || 0);
+        d.setHours(0,0,0,0);
+        return d.getTime() === today.getTime();
+      }).length;
+
+      const totalFU = (followups||[]).length || 0;
+      const completed = (followups||[]).filter(f => (f.status || f.followupStatus) === 'Completed').length;
+      const openFU = totalFU - completed;
+      const completion = totalFU ? Math.round((completed/totalFU)*100) : 0;
+
+      const freq = new Map();
+      (calls||[]).forEach(c => {
+        const k = (c.callerPhone || c.phone || '').trim();
+        if(!k) return; freq.set(k, (freq.get(k) || 0) + 1);
+      });
+
+      const byId = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+      byId('kpi-today', String(todaysCalls));
+      byId('kpi-open', String(openFU));
+      byId('kpi-completion', `${completion}%`);
+      byId('kpi-frequent', String(freq.size));
+    }
+
+    function renderCharts(followups){
+      if (!window.Chart) return;
+
+      const staffCounts = {};
+      (followups||[]).forEach(f=>{
+        const s = f.assignedTo || f.staff || f.staffName || 'Unassigned';
+        staffCounts[s] = (staffCounts[s] || 0) + 1;
+      });
+      const labelsA = Object.keys(staffCounts);
+      const dataA = Object.values(staffCounts);
+
+      const ctxA = document.getElementById('chart-calls-per-staff')?.getContext('2d');
+      if (ctxA) {
+        if (window._chartA) window._chartA.destroy();
+        window._chartA = new Chart(ctxA, {
+          type: 'bar',
+          data: { labels: labelsA, datasets: [{ label:'Calls', data: dataA }] },
+          options: { responsive:true, scales:{ y:{ beginAtZero:true } } }
+        });
+      }
+
+      const total = (followups||[]).length || 0;
+      const completed = (followups||[]).filter(f => (f.status || f.followupStatus) === 'Completed').length;
+      const ctxB = document.getElementById('chart-completion-rate')?.getContext('2d');
+      if (ctxB) {
+        if (window._chartB) window._chartB.destroy();
+        window._chartB = new Chart(ctxB, {
+          type:'doughnut',
+          data:{ labels:['Completed','Open'], datasets:[{ data:[completed, Math.max(total-completed,0)] }] },
+          options:{ responsive:true }
+        });
+      }
+    }
+
+    // Boot
+    document.addEventListener('DOMContentLoaded', () => {
+      const dt = document.getElementById('call-datetime');
+      if (dt && !dt.value) {
+        const now = new Date();
+        dt.value = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      }
+      // Fallback options in case script.js hasn't filled them yet
+      const staffSel = document.getElementById('followup-staff');
+      const personSel = document.getElementById('person-requested');
+      if (personSel && !personSel.options.length) {
+        ['Front Desk','PPF Lead','Workshop Manager','Sales — Ayesha','Sales — Rohan'].forEach(v => personSel.add(new Option(v,v)));
+      }
+      if (staffSel && !staffSel.options.length) {
+        ['Front Desk','PPF Lead','Workshop Manager','Sales — Ayesha','Sales — Rohan'].forEach(v => staffSel.add(new Option(v,v)));
+      }
+      loadDataAndRender();
+    });
+
+    // Refresh table after creates
+    document.getElementById('save-call')?.addEventListener('click', () => setTimeout(loadDataAndRender, 700));
+    document.getElementById('save-followup')?.addEventListener('click', () => setTimeout(loadDataAndRender, 700));
+  </script>
+</body>
+</html>
